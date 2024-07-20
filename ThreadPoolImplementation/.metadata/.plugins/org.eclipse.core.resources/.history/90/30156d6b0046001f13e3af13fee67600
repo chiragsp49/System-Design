@@ -1,0 +1,71 @@
+package threadpool;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+public class ThreadPool {
+	static int quequeSize = 10;
+	static ArrayBlockingQueue<Statement> queque = new ArrayBlockingQueue<Statement>(quequeSize);
+	public static void main(String[] args) {
+		try {
+			//connectWithOutThreadPool(); //16131ms
+			addConnectionsToQueque();
+			
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public static Statement createConnection() throws SQLException, ClassNotFoundException {
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/office","root","admin");
+			Statement statemnet = con.createStatement();
+			return statemnet;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new SQLException(e.toString());
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			throw new ClassNotFoundException(e.toString());
+		}
+	}
+	
+	public static void connectWithOutThreadPool() throws ClassNotFoundException, SQLException {
+		long start = System.nanoTime();
+		for(int i=0;i<500;i++) {
+			Statement statemnet = createConnection();
+			statemnet.execute("SELECT SLEEP(0.01)");
+		}
+		long end = System.nanoTime();
+		long elapsedTime = end - start;
+		System.out.println(TimeUnit.NANOSECONDS.toMillis(elapsedTime)+"ms");
+		
+	}
+	
+	
+	public static void addConnectionsToQueque() throws ClassNotFoundException, InterruptedException, SQLException {
+		for(int i=0;i<quequeSize;i++) {
+			queque.put(createConnection());
+		}
+		
+	}
+	
+	public static void connectWithThreadPool() throws SQLException, InterruptedException {
+		long start = System.nanoTime();
+		Statement statemnet = queque.poll();
+		statemnet.execute("SELECT SLEEP(0.01)");
+		long end = System.nanoTime();
+		long elapsedTime = end - start;
+		System.out.println(TimeUnit.NANOSECONDS.toMillis(elapsedTime)+"ms");
+		queque.put(statemnet);
+	}
+}

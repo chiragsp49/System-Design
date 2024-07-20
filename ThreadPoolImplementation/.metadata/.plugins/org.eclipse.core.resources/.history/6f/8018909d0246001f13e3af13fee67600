@@ -1,0 +1,64 @@
+package threadpool;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.concurrent.TimeUnit;
+
+public class MaxConnectionsTest {
+
+    // Create a new connection and return the Statement object
+    public static Statement createConnection() throws SQLException, ClassNotFoundException {
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/office", "root", "admin");
+        return con.createStatement();
+    }
+
+    public static void connectWithOutThreadPool() throws ClassNotFoundException, SQLException {
+        long start = System.nanoTime();
+        for (int i = 0; i < 100000; i++) {
+            // Create and use a new connection
+            Statement statement = null;
+            ResultSet resultSet = null;
+            try {
+                statement = createConnection();
+                resultSet = statement.executeQuery("SELECT * FROM employees");
+
+                // Optionally process the result set
+                while (resultSet.next()) {
+                    // Simulate processing
+                    // System.out.println(resultSet.getString("name"));
+                }
+
+                // Note: Do not close the Statement or ResultSet here to simulate too many connections
+
+            } catch (SQLException e) {
+                // Print the exception and break the loop
+                e.printStackTrace();
+                break;
+            } finally {
+                // Close the Statement and ResultSet only in case of an exception
+                try {
+                    if (resultSet != null) resultSet.close();
+                    if (statement != null) statement.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        long end = System.nanoTime();
+        long elapsedTime = end - start;
+        System.out.println(TimeUnit.NANOSECONDS.toMillis(elapsedTime) + "ms");
+    }
+
+    public static void main(String[] args) {
+        try {
+            connectWithOutThreadPool();
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
