@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Deployment Demo</title>
+<script>
+    const getDeploymentAPI ="localhost:8080/deployment";
+    async function getDeploymentList(){
+        fetch(getDeploymentAPI)
+        .then(response => {
+            if(!response.ok){
+                throw new Error('Error');
+            }
+        })
+        .then(data =>{
+            console.log(data)
+        })
+    }
+
+    window.onload = getDeploymentList;
+</script>
+</head>
+
+<body>
+    <button>New Deployment</button>
+    <div>
+        <ul>
+            <li>
+
+            </li>
+        </ul>
+    </div>
+</body>
+
+</html>
